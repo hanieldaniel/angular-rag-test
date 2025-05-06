@@ -2,41 +2,38 @@ import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DbService } from './services/db.service';
 import { EmbedHelpService } from './services/embed-help.service';
+import { FormsModule } from '@angular/forms';
+import { euclideanDistance } from 'rxdb/plugins/vector';
+import { sortByObjectNumberProperty } from 'rxdb/plugins/utils';
+import { getAnswer } from './utils/answerer';
+import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [FormsModule, JsonPipe],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
-
   title = 'angular-rag-test';
   embeddingWorker: Worker | null = null;
+  question = '';
+  answer: unknown;
 
   constructor(
     private dbService: DbService,
     private embedService: EmbedHelpService
-  ) {
-
-  }
+  ) {}
 
   ngOnInit(): void {
-    // this.dbService.initalizeDB();
+    this.embedService.createVectorPipeline();
     this.embedService.importTextData();
-    // if (typeof Worker !== 'undefined') {
-    //   // Create a new
-    //   this.embeddingWorker = new Worker(
-    //     new URL('./workers/embedding.worker', import.meta.url)
-    //   );
+  }
 
-    //   this.embeddingWorker.onmessage = (event) => {
-    //     console.log(event.data);
-    //   };
-
-    //   // this.embeddingWorker.postMessage({ data: 'hello how are you madam' });
-    // } else {
-    //   console.log('not supported');
-    // }
+  async askQuestion() {
+    const context = await this.embedService.getContextForResponse(
+      this.question
+    );
+    this.answer = getAnswer(context, this.question);
   }
 }

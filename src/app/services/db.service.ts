@@ -1,36 +1,34 @@
-import { Injectable } from '@angular/core';
+import { Injectable, isDevMode } from '@angular/core';
 import { addRxPlugin, createRxDatabase, RxDatabase } from 'rxdb';
+import { RxDBPipelinePlugin } from 'rxdb/plugins/pipeline';
 import { getRxStorageLocalstorage } from 'rxdb/plugins/storage-localstorage';
-import { wrappedValidateIsMyJsonValidStorage } from 'rxdb/plugins/validate-is-my-json-valid';
-
+import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DbService {
-
   db: RxDatabase | null = null;
 
   constructor() {
     this.initalizeDB();
   }
 
-
   async initalizeDB() {
-
-    if (true) {
-      await import('rxdb/plugins/dev-mode').then(
-        module => addRxPlugin(module.RxDBDevModePlugin)
+    if (isDevMode()) {
+      await import('rxdb/plugins/dev-mode').then((module) =>
+        addRxPlugin(module.RxDBDevModePlugin)
       );
     }
+    addRxPlugin(RxDBPipelinePlugin);
 
-    const storage = wrappedValidateIsMyJsonValidStorage({
-      storage: getRxStorageLocalstorage()
+    const storage = wrappedValidateAjvStorage({
+      storage: getRxStorageLocalstorage(),
     });
 
     this.db = await createRxDatabase({
       name: 'mydatabase',
-      storage
+      storage,
     });
 
     await this.db.addCollections({
@@ -42,15 +40,15 @@ export class DbService {
           properties: {
             id: {
               type: 'string',
-              maxLength: 20
+              maxLength: 20,
             },
             text: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
-          required: ['id', 'text']
-        }
-      }
+          required: ['id', 'text'],
+        },
+      },
     });
 
     await this.db.addCollections({
@@ -62,27 +60,26 @@ export class DbService {
           properties: {
             id: {
               type: 'string',
-              maxLength: 20
+              maxLength: 20,
             },
             embedding: {
               type: 'array',
               items: {
-                type: 'string'
-              }
-            }
+                type: 'number',
+              },
+            },
           },
-          required: ['id', 'embedding']
-        }
-      }
+          required: ['id', 'embedding'],
+        },
+      },
     });
   }
 
   get itemsCollection() {
-    return this.db?.['items']
+    return this.db?.['items'];
   }
 
   get vectorCollection() {
-    return this.db?.['vector']
+    return this.db?.['vector'];
   }
-
 }
